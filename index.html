@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>气球防线 3D · BloonCraft 3D TD</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎈</text></svg>" />
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <div id="canvas-container"></div>
+  <div id="fx-overlay"></div>
+  <div id="screen-flash" class="screen-flash"></div>
+
+  <!-- Ultimate Cut-in Banner -->
+  <div id="ult-banner" class="ult-banner hidden">
+    <span id="ult-banner-icon">☄️</span>
+    <div class="ult-banner-text">
+      <strong id="ult-banner-title">天基陨石浩劫</strong>
+      <span id="ult-banner-sub">ORBITAL METEOR CATACLYSM</span>
+    </div>
+  </div>
+
+  <!-- Top HUD Bar -->
+  <header id="top-hud" class="glass-panel">
+    <div class="brand-block">
+      <button id="btn-map-menu" class="icon-pill" title="切换地图 / 重新开始">🗺️ <span id="hud-map-name">翠绿风车牧场</span></button>
+      <div id="hud-weather-chip" class="stat-chip weather-chip" title="当前战场天气增益">
+        <span id="hud-weather-icon">☀️</span>
+        <span id="hud-weather-name">晴朗微风</span>
+      </div>
+    </div>
+
+    <div class="stats-strip">
+      <div class="stat-chip cash-chip">
+        <span class="stat-icon">🪙</span>
+        <span id="hud-cash">650</span>
+      </div>
+      <div class="stat-chip lives-chip">
+        <span class="stat-icon">❤️</span>
+        <span id="hud-lives">120</span>
+      </div>
+      <div class="stat-chip wave-chip" title="当前波次 / 通关目标波次">
+        <span class="stat-icon">🌊</span>
+        <span><strong id="hud-wave">0</strong>/30波</span>
+      </div>
+      <div class="stat-chip cmd-chip" title="指挥官等级（每升3级或突破里程碑波次可抽取战术秘宝卡！）">
+        <span>🎖️ Lv.<strong id="hud-cmd-lv">1</strong></span>
+        <div class="cmd-xp-track"><div id="hud-cmd-xp" class="cmd-xp-fill"></div></div>
+      </div>
+      <div id="hud-fever-chip" class="stat-chip fever-chip" title="击破气球积攒超载能量，满 100% 自动触发 8 秒全军狂暴超载！">
+        <span id="hud-fever-label">🔥 超载</span>
+        <div class="cmd-xp-track fever-track"><div id="hud-fever-fill" class="fever-fill"></div></div>
+      </div>
+      <div class="stat-chip pops-chip">
+        <span class="stat-icon">🎈</span>
+        <span id="hud-pops">0</span>
+      </div>
+      <div id="hud-combo-chip" class="stat-chip combo-chip hidden">
+        <span>🔥 连击 <strong id="hud-combo">0</strong>x</span>
+      </div>
+    </div>
+
+    <div class="controls-strip">
+      <button id="btn-open-draft" class="draft-alert-btn hidden" title="打开战术秘宝三选一抽卡 (快捷键 C)">🎴 抽卡 <span id="hud-draft-count">1</span></button>
+      <button id="btn-tech" class="ctrl-btn tech-gem-btn" title="星辉永久科技馆（使用星辉晶石永久强化全军属性）">💎 <span id="hud-gems">3</span></button>
+      <button id="btn-speed" class="ctrl-btn" title="切换倍速 (1x / 2x / 4x)">⏩ 1x</button>
+      <button id="btn-auto" class="ctrl-btn" title="自动开启下一波">🔄 自动: 关</button>
+      <button id="btn-cam" class="ctrl-btn" title="切换视角 (立体 / 俯视 / 电影)">🎥 立体</button>
+      <button id="btn-save" class="ctrl-btn" title="战局存档与读档中心">💾 存档</button>
+      <button id="btn-guide" class="ctrl-btn" title="气球属性克制与操作图鉴">📖 图鉴</button>
+      <button id="btn-settings" class="ctrl-btn" title="音画与辅助设置中心">⚙️ 设置</button>
+      <button id="btn-mute" class="ctrl-btn" title="一键静音切换">🔊</button>
+      <button id="btn-start-wave" class="primary-wave-btn">▶ 开始第 1 波 <kbd>Space</kbd></button>
+    </div>
+  </header>
+
+  <!-- Wave Forecast / Threat Radar Banner -->
+  <div id="wave-banner" class="glass-panel">
+    <button id="btn-bounty" class="bounty-btn" title="发兵前签署：下波敌军强化，通关享 +65% 赏金 + 双倍经验 + 2💎星辉晶石！">⚔️ 悬赏加倍</button>
+    <div id="wave-forecast-chips" class="forecast-chips"></div>
+    <span id="wave-warning-badge" class="warning-badge hidden"></span>
+    <span id="wave-hint-text">欢迎来到 3D 气球防线！点击下方防御塔部署在弯道旁，按 Space 发兵。</span>
+  </div>
+
+  <!-- Top Boss Health Bar -->
+  <div id="boss-hud-bar" class="boss-hud-bar glass-panel hidden">
+    <div class="boss-hud-top">
+      <span id="boss-hud-name">👑 ZOMG 翡翠泰坦舰</span>
+      <span id="boss-hud-hp">2800 / 2800</span>
+    </div>
+    <div class="boss-hp-track">
+      <div id="boss-hp-fill" class="boss-hp-fill"></div>
+    </div>
+  </div>
+
+  <!-- Active Roguelike Relic Badges Strip -->
+  <div id="relic-bar" class="relic-bar"></div>
+
+  <!-- Left Active Abilities Bar -->
+  <aside id="ability-bar" class="glass-panel">
+    <div class="ability-title">主动大招</div>
+    <div id="ability-list"></div>
+  </aside>
+
+  <!-- Right Selected Tower Inspector -->
+  <aside id="inspector-panel" class="glass-panel hidden">
+    <div class="inspector-header">
+      <div>
+        <h3 id="insp-name">飞镖射手</h3>
+        <div class="insp-meta">累计伤害: <strong id="insp-pops">0</strong> <span id="insp-buff-badge" class="buff-badge hidden">🏛️ 光环增益</span></div>
+      </div>
+      <button id="btn-close-insp" class="close-btn">✕</button>
+    </div>
+
+    <div id="insp-live-stats" class="insp-live-stats"></div>
+    <div id="insp-signature-box" class="insp-signature-box"></div>
+
+    <div id="insp-target-group" class="target-group">
+      <span class="section-label">索敌策略 <kbd>Tab</kbd></span>
+      <div class="target-pills">
+        <button data-mode="first" class="target-pill active">最前</button>
+        <button data-mode="strong" class="target-pill">最强</button>
+        <button data-mode="last" class="target-pill">最后</button>
+        <button data-mode="close" class="target-pill">最近</button>
+      </div>
+    </div>
+
+    <div class="tier-dots" id="insp-tier-dots"></div>
+
+    <div id="insp-upgrade-box" class="upgrade-box">
+      <div class="upg-title" id="insp-upg-name">穿甲利镖</div>
+      <div class="upg-desc" id="insp-upg-desc">穿透 +2，射程 +15%</div>
+      <button id="btn-upgrade" class="upgrade-btn">⬆ 升级 (<span id="insp-upg-cost">$130</span>) <kbd>U</kbd></button>
+    </div>
+
+    <button id="btn-fuse" class="fuse-btn hidden">🧬 吞并同系合体 ($850) <kbd>F</kbd></button>
+
+    <button id="btn-sell" class="sell-btn">💰 出售返还 $<span id="insp-sell-val">135</span> <kbd>S</kbd></button>
+  </aside>
+
+  <!-- Bottom Tower Shop Dock -->
+  <footer id="tower-dock" class="glass-panel">
+    <div id="tower-cards" class="tower-cards"></div>
+  </footer>
+
+  <!-- Toast Notification Stack -->
+  <div id="toast-container"></div>
+
+  <!-- Holographic 3-Card Roguelike Draft Modal -->
+  <div id="draft-backdrop" class="modal-backdrop draft-backdrop hidden">
+    <div class="draft-modal glass-panel">
+      <div class="draft-header">
+        <span class="draft-kicker">✨ TACTICAL AUGMENT DRAFT · 战略秘宝三选一</span>
+        <h2>🎴 选择一项永久秘宝强化全军</h2>
+        <p>达成里程碑波次、指挥官晋升或击破宝藏飞艇时触发 · 可叠加构筑专属流派</p>
+      </div>
+      <div id="draft-cards-wrap" class="draft-cards-wrap"></div>
+      <div class="draft-actions">
+        <button id="btn-reroll-draft" class="ctrl-btn draft-reroll-btn">🎲 刷新卡池 ($80)</button>
+        <button id="btn-defer-draft" class="ctrl-btn">稍后选择 (C)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Start / Map Selection Modal -->
+  <div id="modal-backdrop" class="modal-backdrop hidden">
+    <div class="modal-card glass-panel">
+      <h1 id="modal-title">🎈 气球防线 3D</h1>
+      <p id="modal-subtitle">立体微缩景观 · 经典层层剥皮机制 · 爽快连锁爆破</p>
+      <div id="map-cards" class="map-cards"></div>
+      <div id="modal-actions" class="modal-actions"></div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
